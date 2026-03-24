@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Bell } from "lucide-react";
 import { Country } from "country-state-city";
 import { countryCodes, eoiSchema, initialForm, inputClasses, type EOIForm } from "@/lib/eoi-form";
-import { FieldError, RadioOption } from "@/lib/eoi-components";
+import { FieldError, RadioOption } from "@/components/ui/eoi-components";
 import EOIHeader from "@/components/eoi/EOIHeader";
 import LocationField from "@/components/eoi/LocationField";
 

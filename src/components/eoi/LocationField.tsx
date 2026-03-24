@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Country, State, City, type ICity } from "country-state-city";
 import { inputClasses, type EOIForm } from "@/lib/eoi-form";
-import { FieldError } from "@/lib/eoi-components";
+import { FieldError } from "@/components/ui/eoi-components";
 
 interface LocationFieldProps {
   form: EOIForm;
