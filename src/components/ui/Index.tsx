@@ -1,21 +1,17 @@
 import { lazy, Suspense } from "react";
 import Navbar from "@/components/ui/Navbar";
 import HeroSection from "@/components/ui/HeroSection";
-import WhatIsErdh from "@/components/ui/WhatIsErdh";
-import PillarsStrip from "@/components/ui/PillarsStrip";
-import PhilosophySection from "@/components/ui/PhilosophySection";
-import WayanadSection from "@/components/ui/WayanadSection";
-import FAQSection from "@/components/ui/FAQSection";
 import Footer from "@/components/ui/Footer";
-import ExploreLifeSection from "@/components/ui/ExploreLifeSection";
-import ExpressInterestCTA from "@/components/ui/ExpressInterestCTA";
-import FloatingWhatsApp from "@/components/ui/FloatingWhatsApp";
 
-// Lazy load heavy below-fold sections to reduce initial bundle
-// CommunitySpaces: loads 15+ images + embla carousel
-// MasterplanDiagram: 716 lines of interactive SVG
-// JoinSection: imports country-state-city (~2MB)
-// PillarsSection: can be deferred safely
+// Lazy load all heavy components to reduce initial bundle for mobile networks
+const WhatIsErdh = lazy(() => import("@/components/ui/WhatIsErdh"));
+const PillarsStrip = lazy(() => import("@/components/ui/PillarsStrip"));
+const PhilosophySection = lazy(() => import("@/components/ui/PhilosophySection"));
+const WayanadSection = lazy(() => import("@/components/ui/WayanadSection"));
+const FAQSection = lazy(() => import("@/components/ui/FAQSection"));
+const ExploreLifeSection = lazy(() => import("@/components/ui/ExploreLifeSection"));
+const ExpressInterestCTA = lazy(() => import("@/components/ui/ExpressInterestCTA"));
+const FloatingWhatsApp = lazy(() => import("@/components/ui/FloatingWhatsApp"));
 const CommunitySpaces = lazy(() => import("@/components/ui/CommunitySpaces"));
 const MasterplanDiagram = lazy(() => import("@/components/infographic/MasterplanDiagram"));
 const JoinSection = lazy(() => import("@/components/ui/JoinSection"));
@@ -32,10 +28,18 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <HeroSection />
-      <WhatIsErdh />
-      <PillarsStrip />
-      <PhilosophySection />
-      <WayanadSection />
+      <Suspense fallback={<SectionFallback />}>
+        <WhatIsErdh />
+      </Suspense>
+      <Suspense fallback={<SectionFallback />}>
+        <PillarsStrip />
+      </Suspense>
+      <Suspense fallback={<SectionFallback />}>
+        <PhilosophySection />
+      </Suspense>
+      <Suspense fallback={<SectionFallback />}>
+        <WayanadSection />
+      </Suspense>
       <Suspense fallback={<SectionFallback />}>
         <CommunitySpaces />
       </Suspense>
@@ -45,14 +49,22 @@ const Index = () => {
       <Suspense fallback={<SectionFallback />}>
         <PillarsSection />
       </Suspense>
-      <FAQSection />
-      <ExploreLifeSection />
+      <Suspense fallback={<SectionFallback />}>
+        <FAQSection />
+      </Suspense>
+      <Suspense fallback={<SectionFallback />}>
+        <ExploreLifeSection />
+      </Suspense>
       <Suspense fallback={<SectionFallback />}>
         <JoinSection />
       </Suspense>
-      <ExpressInterestCTA />
+      <Suspense fallback={<SectionFallback />}>
+        <ExpressInterestCTA />
+      </Suspense>
       <Footer />
-      <FloatingWhatsApp />
+      <Suspense fallback={<SectionFallback />}>
+        <FloatingWhatsApp />
+      </Suspense>
     </div>
   );
 };

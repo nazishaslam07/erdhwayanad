@@ -24,14 +24,23 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          "country-state-city": ["country-state-city"],
-          "vendor": [
-            "react",
-            "react-dom",
-            "react-router-dom",
-            "@tanstack/react-query",
-          ],
+        manualChunks(id) {
+          // Prioritize country-state-city as separate chunk
+          if (id.includes('country-state-city')) {
+            return 'country-state-city';
+          }
+          // Separate vendor code
+          if (
+            id.includes('node_modules/react') ||
+            id.includes('node_modules/@tanstack/react-query') ||
+            id.includes('node_modules/react-router-dom')
+          ) {
+            return 'vendor';
+          }
+          // Separate UI framework
+          if (id.includes('node_modules/framer-motion')) {
+            return 'animations';
+          }
         },
       },
     },
@@ -39,7 +48,17 @@ export default defineConfig(({ mode }) => ({
     terserOptions: {
       compress: {
         drop_console: true,
+        passes: 2,
+      },
+      mangle: {
+        properties: { regex: /^_/ }, // Mangle private properties
+      },
+      format: {
+        comments: false,
       },
     },
+    // Important for slow networks: enable gzip compression
+    assetsInlineLimit: 2048, // Inline small assets (< 2KB)
+    cssCodeSplit: true, // Split CSS per chunk
   },
 }));
