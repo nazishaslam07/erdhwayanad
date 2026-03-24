@@ -1,5 +1,5 @@
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { forwardRef, useRef, useState, useMemo } from "react";
+import { forwardRef, useRef, useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RadioGroup } from "@/components/ui/radio-group";
@@ -9,9 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Bell, ChevronDown } from "lucide-react";
-import { Country, City, State } from "country-state-city";
 import { countryCodes, eoiSchema, initialForm, inputClasses, type EOIForm } from "@/lib/eoi-form";
 import { FieldError, RadioOption } from "@/components/ui/eoi-components";
+
+type CountryStateCity = {
+  Country: any;
+  City: any;
+  State: any;
+};
 
 const JoinSection = forwardRef<HTMLElement>((_, ref) => {
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -25,8 +30,21 @@ const JoinSection = forwardRef<HTMLElement>((_, ref) => {
   const [citySearch, setCitySearch] = useState("");
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+  const [csc, setCsc] = useState<CountryStateCity | null>(null);
 
-  const allCountries = useMemo(() => Country.getAllCountries(), []);
+  // Lazy load country-state-city only when form is expanded
+  useEffect(() => {
+    if (!expanded || csc) return;
+    import("country-state-city").then((m) => {
+      setCsc({
+        Country: m.Country,
+        City: m.City,
+        State: m.State,
+      });
+    });
+  }, [expanded, csc]);
+
+  const allCountries = useMemo(() => csc?.Country.getAllCountries() ?? [], [csc]);
   const priorityCountryCodes = useMemo(() => new Set([
     "IN", "AE", "US", "SA", "GB", "CA", "AU", "SG", "MY", "QA", "KW", "OM", "BH", "NZ", "DE"
   ]), []);
@@ -44,20 +62,20 @@ const JoinSection = forwardRef<HTMLElement>((_, ref) => {
   }, [sortedCountries, countrySearch]);
 
   const citiesForCountry = useMemo(() => {
-    if (!form.countryIso) return [];
-    const states = State.getStatesOfCountry(form.countryIso);
+    if (!form.countryIso || !csc) return [];
+    const states = csc.State.getStatesOfCountry(form.countryIso);
     const citySet = new Map();
     for (const state of states) {
-      for (const city of City.getCitiesOfState(form.countryIso, state.isoCode)) {
+      for (const city of csc.City.getCitiesOfState(form.countryIso, state.isoCode)) {
         citySet.set(city.name, city);
       }
     }
-    const directCities = City.getCitiesOfCountry(form.countryIso);
+    const directCities = csc.City.getCitiesOfCountry(form.countryIso);
     if (directCities) {
       for (const city of directCities) citySet.set(city.name, city);
     }
     return Array.from(citySet.values()).sort((a: any, b: any) => a.name.localeCompare(b.name));
-  }, [form.countryIso]);
+  }, [form.countryIso, csc]);
 
   const filteredCities = useMemo(() => {
     if (!citySearch) return citiesForCountry.slice(0, 100);
@@ -66,9 +84,9 @@ const JoinSection = forwardRef<HTMLElement>((_, ref) => {
   }, [citiesForCountry, citySearch]);
 
   const selectedCountryName = useMemo(() => {
-    if (!form.countryIso) return "";
-    return Country.getCountryByCode(form.countryIso)?.name ?? "";
-  }, [form.countryIso]);
+    if (!form.countryIso || !csc) return "";
+    return csc.Country.getCountryByCode(form.countryIso)?.name ?? "";
+  }, [form.countryIso, csc]);
 
   const setSectionRefs = (node: HTMLElement | null) => {
     sectionRef.current = node;
@@ -112,7 +130,7 @@ const JoinSection = forwardRef<HTMLElement>((_, ref) => {
     }
     setIsSubmitting(true);
     try {
-      const countryName = Country.getCountryByCode(result.data.countryIso)?.name ?? result.data.countryIso;
+      const countryName = csc?.Country.getCountryByCode(result.data.countryIso)?.name ?? result.data.countryIso;
       const { error } = await supabase.from("expression_of_interest").insert({
         full_name: result.data.fullName,
         email: result.data.email,
