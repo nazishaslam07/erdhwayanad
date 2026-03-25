@@ -1,52 +1,181 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-loading="true">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>erdh 1.0 wayanad — Earth-Rooted Community</title>
     <meta name="description" content="erdh 1.0 wayanad is an intentional living community stewarded by its residents, where families return to purpose, simplicity, and a life in harmony with Nature.">
     <meta name="author" content="erdh" />
-    <!-- Preconnect to Google Fonts for faster font loading -->
+    
+    <!-- DNS prefetch and preconnect for critical resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Preconnect to Supabase APIs for backend connectivity -->
     <link rel="preconnect" href="https://qulnergchrowcecximaa.supabase.co" />
     <link rel="dns-prefetch" href="https://qulnergchrowcecximaa.supabase.co" />
-    <!-- Non-blocking font loading with display=swap (moved from CSS @import) -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" media="print" onload="this.media='all'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" /></noscript>
-    <!-- Preconnect to YouTube for when user clicks play -->
     <link rel="dns-prefetch" href="https://i.ytimg.com" />
     <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
 
-    
-    
+    <!-- Minimal inline critical CSS for instant render -->
+    <style>
+      :root {
+        --foreground: #3d3228;
+        --background: #faf8f3;
+        --primary: #a68068;
+        --muted: #bbb;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
+        width: 100%;
+        height: 100%;
+      }
+      body {
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        background: var(--background);
+        color: var(--foreground);
+        font-size: 16px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        width: 100%;
+        min-height: 100vh;
+      }
+      .loading-shell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .loading-spinner {
+        width: 32px;
+        height: 3px;
+        background: var(--primary);
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
+      }
+      .loading-text {
+        font-size: 14px;
+        color: #666;
+        text-align: center;
+      }
+      .loading-text.meta {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 10px;
+      }
+      .connection-status {
+        font-size: 11px;
+        color: #999;
+        margin-top: 20px;
+        font-family: monospace;
+      }
+      html[data-connection="slow"] body {
+        --animation-duration: 0.01ms;
+      }
+    </style>
+
+    <!-- Non-blocking fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" /></noscript>
+
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/SZBTKKGLP2PzKc4KC7kOrDhzKPB3/social-images/social-1773522050789-A_typical_erh_house_(for_web)_(1).webp">
-
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@Lovable" />
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/SZBTKKGLP2PzKc4KC7kOrDhzKPB3/social-images/social-1773522050789-A_typical_erh_house_(for_web)_(1).webp">
-    
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  <meta property="og:title" content="erdh 1.0 wayanad — Earth-Rooted  Community">
-  <meta name="twitter:title" content="erdh 1.0 wayanad — Earth-Rooted  Community">
-  <meta property="og:description" content="erdh 1.0 wayanad is an intentional living community stewarded by its residents, where families return to purpose, simplicity, and a life in harmony with Nature.">
-  <meta name="twitter:description" content="erdh 1.0 wayanad is an intentional living community stewarded by its residents, where families return to purpose, simplicity, and a life in harmony with Nature.">
-</head>
+    <meta property="og:title" content="erdh 1.0 wayanad — Earth-Rooted Community">
+    <meta name="twitter:title" content="erdh 1.0 wayanad — Earth-Rooted Community">
+    <meta property="og:description" content="erdh 1.0 wayanad is an intentional living community stewarded by its residents, where families return to purpose, simplicity, and a life in harmony with Nature.">
+    <meta name="twitter:description" content="erdh 1.0 wayanad is an intentional living community stewarded by its residents, where families return to purpose, simplicity, and a life in harmony with Nature.">
+  </head>
 
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <!-- Visible shell immediately -->
+    <div id="root">
+      <div class="loading-shell">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Loading erdh...</p>
+        <div class="loading-text meta">If this takes too long, try refreshing the page</div>
+        <div class="connection-status">
+          <span id="connection-info"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inline connection monitoring script (runs immediately) -->
+    <script>
+      // Run immediately before any other scripts
+      (function monitorConnection() {
+        const infoEl = document.getElementById('connection-info');
+        const html = document.documentElement;
+        
+        function updateStatus(msg) {
+          if (infoEl) infoEl.textContent = msg;
+          console.log('[erdh] ' + msg);
+        }
+
+        // Detect connection quality
+        function detectConnection() {
+          const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+          if (!conn) return 'unknown';
+          
+          const type = conn.effectiveType;
+          const rtt = conn.rtt;
+          const saveData = conn.saveData;
+          
+          if (saveData) return 'slow (data saver)';
+          if (type === '4g' && rtt < 50) return 'fast (4g)';
+          if (type === '3g' || type === '2g' || rtt > 150) return 'slow (3g/2g)';
+          if (type === '4g') return 'fast (4g)';
+          return 'unknown';
+        }
+
+        const quality = detectConnection();
+        html.setAttribute('data-connection', quality.includes('slow') ? 'slow' : 'fast');
+        updateStatus('Connection: ' + quality);
+
+        // Monitor connection changes
+        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        if (conn) {
+          conn.addEventListener('change', function() {
+            const newQuality = detectConnection();
+            updateStatus('Connection changed: ' + newQuality);
+          });
+        }
+
+        // Track script loading
+        const scripts = document.querySelectorAll('script[data-module]');
+        let loadedCount = 0;
+        scripts.forEach(s => {
+          s.addEventListener('load', () => {
+            loadedCount++;
+            updateStatus('Loaded module ' + loadedCount + '/' + scripts.length);
+          });
+          s.addEventListener('error', () => {
+            updateStatus('⚠️ Failed to load module');
+          });
+        });
+
+        // Timeout checker
+        setTimeout(() => {
+          const root = document.getElementById('root');
+          if (root && root.querySelector('.loading-shell')) {
+            updateStatus('⚠️ Taking longer than expected. Page may load any moment.');
+          }
+        }, 10000);
+      })();
+    </script>
+
+    <!-- Main app script with keepalive and error handling -->
+    <script type="module" src="/src/main.tsx" data-module></script>
   </body>
 </html>

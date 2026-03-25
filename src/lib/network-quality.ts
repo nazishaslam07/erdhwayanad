@@ -7,6 +7,7 @@ export type ConnectionQuality = 'fast' | 'slow' | 'unknown';
 
 export const detectConnectionQuality = (): ConnectionQuality => {
   if (!navigator.connection && !('connection' in navigator)) {
+    console.log('[erdh] Connection API not available');
     return 'unknown';
   }
 
@@ -16,33 +17,54 @@ export const detectConnectionQuality = (): ConnectionQuality => {
   const rtt = connection.rtt;
   const saveData = (navigator as any).connection?.saveData;
 
+  const debugInfo = { type, downlink, rtt, saveData };
+  console.log('[erdh] Connection info:', debugInfo);
+
   // If user has data saver enabled, treat as slow
-  if (saveData) return 'slow';
+  if (saveData) {
+    console.log('[erdh] Data saver detected - marking as slow');
+    return 'slow';
+  }
 
   // 4g with good RTT = fast
-  if (type === '4g' && rtt < 50) return 'fast';
+  if (type === '4g' && rtt < 50) {
+    console.log('[erdh] Fast 4G detected');
+    return 'fast';
+  }
 
   // 3g, slow 4g, or elevated RTT = slow
-  if (type === '3g' || type === '2g' || rtt > 150) return 'slow';
+  if (type === '3g' || type === '2g' || rtt > 150) {
+    console.log(`[erdh] Slow connection detected: ${type}, RTT=${rtt}ms`);
+    return 'slow';
+  }
 
   // Default to fast if modern connection
-  if (type === '4g') return 'fast';
+  if (type === '4g') {
+    console.log('[erdh] 4G connection (fast)');
+    return 'fast';
+  }
 
+  console.log('[erdh] Connection quality unknown, defaulting to safe');
   return 'unknown';
 };
 
 /**
  * Get adaptive loading config based on connection quality
  */
-export const getAdaptiveConfig = (quality: ConnectionQuality) => ({
-  disableAnimations: quality === 'slow',
-  deferImages: quality === 'slow',
-  reduceChunkSize: quality === 'slow',
-  showSimpleFallback: quality === 'slow',
-  enableServiceWorker: true,
-  prefetchCritical: quality !== 'slow',
-  fetchTimeout: quality === 'slow' ? 45000 : 30000, // 45s for slow, 30s for others
-});
+export const getAdaptiveConfig = (quality: ConnectionQuality) => {
+  const config = {
+    disableAnimations: quality === 'slow',
+    deferImages: quality === 'slow',
+    reduceChunkSize: quality === 'slow',
+    showSimpleFallback: quality === 'slow',
+    enableServiceWorker: true,
+    prefetchCritical: quality !== 'slow',
+    fetchTimeout: quality === 'slow' ? 45000 : 30000, // 45s for slow, 30s for others
+  };
+
+  console.log('[erdh] Adaptive config:', { quality, ...config });
+  return config;
+};
 
 /**
  * Monitor connection quality changes
@@ -51,7 +73,9 @@ export const onConnectionChange = (callback: (quality: ConnectionQuality) => voi
   if (!navigator.connection) return;
 
   (navigator.connection as any).addEventListener('change', () => {
-    callback(detectConnectionQuality());
+    const newQuality = detectConnectionQuality();
+    console.log('[erdh] Connection changed:', newQuality);
+    callback(newQuality);
   });
 };
 

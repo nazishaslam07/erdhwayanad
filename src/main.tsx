@@ -30,91 +30,127 @@ if (adaptiveConfig.disableAnimations) {
   document.head.appendChild(style);
 }
 
-// Enhanced fetch with retry logic and improved timeout handling
+// Enhanced fetch with keepalive, connection pooling, and retry logic
 const originalFetch = window.fetch;
-const MAX_RETRIES = 3;
+const MAX_RETRIES = connectionQuality === 'slow' ? 5 : 3;
 const BASE_TIMEOUT = adaptiveConfig.fetchTimeout;
+const requestCache = new Map<string, Promise<Response>>();
 
 async function fetchWithRetry(
   resource: RequestInfo | URL,
   options: RequestInit & { retryCount?: number } = {}
 ): Promise<Response> {
+  const url = typeof resource === 'string' ? resource : resource instanceof URL ? resource.toString() : (resource as Request).url;
   const retryCount = options.retryCount || 0;
-  const timeout = BASE_TIMEOUT + (retryCount * 5000); // Add 5s per retry
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    const response = await originalFetch(resource, {
-      ...options,
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    if (retryCount < MAX_RETRIES) {
-      const delay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Exponential backoff
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return fetchWithRetry(resource, { ...options, retryCount: retryCount + 1 });
-    }
-    throw error;
+  
+  // Avoid duplicate simultaneous requests
+  const cacheKey = `${url}-${JSON.stringify(options)}`;
+  if (options.method === 'GET' && requestCache.has(cacheKey)) {
+    return requestCache.get(cacheKey)!;
   }
+
+  const fetchPromise = (async () => {
+    try {
+      const timeout = Math.min(BASE_TIMEOUT + (retryCount * 5000), 60000); // Cap at 60s
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.warn(`[erdh] Fetch timeout for ${url} (${timeout}ms, retry ${retryCount})`);
+        controller.abort();
+      }, timeout);
+
+      const response = await originalFetch(resource, {
+        ...options,
+        signal: controller.signal,
+        keepalive: true, // Keep connection alive for reuse
+      });
+
+      clearTimeout(timeoutId);
+      
+      // Clear cache on success
+      requestCache.delete(cacheKey);
+      
+      return response;
+    } catch (error) {
+      const isAbort = error instanceof DOMException && error.name === 'AbortError';
+      const isNetworkError = error instanceof TypeError;
+      
+      console.error(`[erdh] Fetch failed for ${url}:`, {
+        retry: retryCount,
+        error: isAbort ? 'timeout' : isNetworkError ? 'network' : 'unknown',
+        message: error instanceof Error ? error.message : String(error),
+      });
+
+      if (retryCount < MAX_RETRIES) {
+        // Exponential backoff with jitter
+        const baseDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+        const jitter = Math.random() * 1000;
+        const delay = baseDelay + jitter;
+        
+        console.log(`[erdh] Retrying ${url} in ${Math.round(delay)}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return fetchWithRetry(resource, { ...options, retryCount: retryCount + 1 });
+      }
+      
+      throw error;
+    }
+  })();
+
+  // Cache GET requests to avoid duplicates
+  if (options.method === 'GET' || !options.method) {
+    requestCache.set(cacheKey, fetchPromise);
+    fetchPromise.catch(() => requestCache.delete(cacheKey));
+  }
+
+  return fetchPromise;
 }
 
 // Override window.fetch with retry logic
 window.fetch = fetchWithRetry as any;
+
+// Add global error handler
+let hasErrored = false;
+window.addEventListener('error', (event) => {
+  if (!hasErrored && event.error) {
+    hasErrored = true;
+    console.error('[erdh] Global error:', event.error);
+    // Don't prevent default - let React error boundary handle it
+  }
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('[erdh] Unhandled promise rejection:', event.reason);
+});
 
 // Register service worker with error handling
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js', { updateViaCache: 'none' })
+      .then(reg => {
+        console.log('[erdh] Service Worker registered');
+        // Check for updates periodically
+        setInterval(() => reg.update(), 60000);
+      })
       .catch((err) => {
-        console.debug('SW registration failed:', err.message);
-        // Fail silently - app still works without SW
+        console.debug('[erdh] SW registration failed:', err.message);
       });
   });
 }
 
-// Add global error handler for network issues
-window.addEventListener('error', (event) => {
-  if (event.message && event.message.includes('fetch')) {
-    console.error('Network error detected:', event.error);
-  }
-});
-
-// Show loading indicator while app initializes
+// Log when app is mounted
+const originalCreateRoot = createRoot;
 const root = document.getElementById('root');
-if (root && root.children.length === 0) {
-  root.innerHTML = `
-    <div style="
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #faf8f3;
-    ">
-      <div style="text-align: center;">
-        <div style="
-          width: 40px;
-          height: 3px;
-          background: #a68068;
-          margin: 0 auto 20px;
-          animation: pulse 1.5s ease-in-out infinite;
-        "></div>
-        <p style="color: #666; font-size: 14px; margin: 0;">Loading erdh...</p>
-      </div>
-      <style>
-        @keyframes pulse {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 1; }
-        }
-      </style>
-    </div>
-  `;
+if (root) {
+  console.log('[erdh] Mounting React app...');
+  
+  originalCreateRoot(root).render(<App />);
+  
+  // Mark as loaded
+  document.documentElement.removeAttribute('data-loading');
+  document.documentElement.setAttribute('data-app-loaded', 'true');
+  
+  console.log('[erdh] App mounted successfully');
+} else {
+  console.error('[erdh] Root element not found!');
 }
-
-createRoot(root!).render(<App />);
